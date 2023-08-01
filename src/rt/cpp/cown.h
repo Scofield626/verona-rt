@@ -357,7 +357,7 @@ namespace verona::cpp
     template<typename TT, typename... Args>
     friend cown_ptr<TT> make_cown_custom(void *addr, Args&&...);
 
-    template<typename...>
+    template<typename F, typename... Args2>
     friend class When;
 
     template<typename TT>
@@ -451,8 +451,8 @@ namespace verona::cpp
   template<typename T>
   class acquired_cown
   {
-    /// Needed to build one from inside a `when`
-    template<typename...>
+    /// Needed to build one from inside a `When`
+    template<typename F, typename... Args2>
     friend class When;
 
   private:
