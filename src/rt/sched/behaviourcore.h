@@ -439,13 +439,14 @@ namespace verona::rt
       for (size_t i = 0; i < count; i++)
       {
         yield();
+#if 0
         auto slot = std::get<1>(indexes[i]);
         Logging::cout() << "Setting slot " << slot << " to ready"
                         << Logging::endl;
         if (slot->is_wait())
           slot->set_ready();
+#endif
       }
-
       for (size_t i = 0; i < body_count; i++)
       {
         yield();
