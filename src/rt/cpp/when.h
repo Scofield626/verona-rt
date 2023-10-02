@@ -59,12 +59,15 @@ namespace verona::cpp
       {
         auto&& w = std::get<index>(when_batch);
         // Add the behaviour here
+        barray[index] = w.to_behaviour();
+#if 0
         auto t = w.to_tuple();
         barray[index] = Behaviour::prepare_to_schedule<
           typename std::remove_reference<decltype(std::get<2>(t))>::type>(
           std::move(std::get<0>(t)),
           std::move(std::get<1>(t)),
           std::move(std::get<2>(t)));
+#endif
         create_behaviour<index + 1>(barray);
       }
     }
@@ -120,7 +123,7 @@ namespace verona::cpp
     std::tuple<Access<Args>...> cown_tuple;
 
     /// The closure to be executed.
-    F f;
+    F&& f;
 
     /// Used as a temporary to build the behaviour.
     /// The stack lifetime is tricky, and this avoids
@@ -188,6 +191,40 @@ namespace verona::cpp
           });
       }
     }
+
+    template<typename F2>
+    auto to_behaviour_help(F2&& f_help)
+    {
+      return Behaviour::prepare_to_schedule<F2>(
+        sizeof...(Args), requests, std::forward<F2>(f_help));
+    }
+
+    auto to_behaviour()
+    {
+      if constexpr (sizeof...(Args) == 0)
+      {
+        return Behaviour::prepare_to_schedule<F>(
+            0, nullptr, std::forward<F>(f));
+      }
+      else
+      {
+        array_assign(requests);
+
+        return to_behaviour_help(
+          sizeof...(Args),
+          requests,
+          [f = std::forward<F>(f), cown_tuple = cown_tuple]() mutable {
+            /// Effectively converts ActualCown<T>... to
+            /// acquired_cown... .
+            auto lift_f = [f = std::forward<F>(f)](Access<Args>... args) mutable {
+              f(access_to_acquired<Args>(args)...);
+            };
+
+            std::apply(lift_f, cown_tuple);
+          });
+      }
+    }
+
 
   public:
     When(F&& f_) : f(std::forward<F>(f_)) {}
