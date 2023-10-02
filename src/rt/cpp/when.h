@@ -211,8 +211,6 @@ namespace verona::cpp
         array_assign(requests);
 
         return to_behaviour_help(
-          sizeof...(Args),
-          requests,
           [f = std::forward<F>(f), cown_tuple = cown_tuple]() mutable {
             /// Effectively converts ActualCown<T>... to
             /// acquired_cown... .
